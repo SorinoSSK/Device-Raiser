@@ -1,9 +1,9 @@
 #include <Servo.h>
 
-#define maxStrCnt 3
+#define maxStrCnt   4
 
 // Initialise Pin
-int servoPin    = 9;
+#define servoPin    9
 
 // Initialise Servo
 Servo myservo;          // create servo object to control a servo
@@ -23,7 +23,7 @@ void setup()
     // Serial
     Serial.begin(9600);
     // Servo
-    myservo.attach(servoPin);       // attaches the servo on pin 9 to the servo object
+    myservo.attach(servoPin);
     // Others
     memset(readChar, 0, sizeof(readChar));
     Serial.println("Device Raiser");
@@ -60,7 +60,7 @@ void readSerialInput()
         }
         else
         {
-            if (readCnt < maxStrCnt)
+            if (readCnt < maxStrCnt-1)
             {
                 readChar[readCnt] = (char) readByte;
                 readCnt += 1;
@@ -83,14 +83,16 @@ void rotateServoMotor()
     if (readStr == "SM0" && servoPos < maxPos)
     {
         servoPos+=1;
-        myservo.write(maxPos);
-        delay(15);
+        myservo.write(servoPos);
+        Serial.println(servoPos);
+        delay(100);
     }
-    else if (readStr == "SM1" && servoPos > maxPos)
+    else if (readStr == "SM1" && servoPos > minPos)
     {
         servoPos-=1;
-        myservo.write(minPos);
-        delay(15);
+        myservo.write(servoPos);
+        Serial.println(servoPos);
+        delay(100);
     }
     else
     {
