@@ -1,13 +1,15 @@
 #include <Servo.h>
 
 #define maxStrCnt   4
+#define maxPos      100
+#define minPos      30
 
 // Initialise Pin
 #define servoPin    9
 
 // Initialise Servo
-Servo myservo;          // create servo object to control a servo
-int servoPos    = 0;    // variable to store the servo position
+Servo myservo;              // create servo object to control a servo
+int servoPos    = maxPos;   // variable to store the servo position
 
 // Global Variable
 String readStr  = "";
@@ -15,8 +17,9 @@ char readChar[maxStrCnt];
 
 int readCnt     = 0;
 int LF_Byte     = 10;
-int maxPos      = 90;
-int minPos      = 0;
+int targetPos   = maxPos;
+int steps       = 1;
+bool isStepDone = false;
 
 void setup() 
 {
@@ -24,10 +27,12 @@ void setup()
     Serial.begin(9600);
     // Servo
     myservo.attach(servoPin);
+    myservo.write(servoPos);
     // Others
     memset(readChar, 0, sizeof(readChar));
-    Serial.println("Device Raiser");
-    Serial.println("Enter SM0 or SM1 to control the servo motor:");
+    Serial.println("===============Device Raiser===============");
+    Serial.println("Enter SM0 or SM1 to control the servo motor");
+    Serial.println("===========================================");
 }
 
 void loop() 
@@ -46,24 +51,23 @@ void readSerialInput()
             readCnt = 0;
             readStr = String(readChar);
             memset(readChar, 0, sizeof(readChar));
-            Serial.println("Value Read: " + readStr);
-
             if (readStr == "SM0" || readStr == "SM1")
             {
-                Serial.println("SYS: " + readStr);
+                targetPos = (readStr == "SM0") ? maxPos : minPos;
+                steps = (targetPos > servoPos) ? 1 : -1;
+                Serial.println("OK");
             }
             else
             {
                 readStr = "";
-                Serial.println("ERR: Invalid Input");
+                Serial.println("ERR");
             }
         }
         else
         {
             if (readCnt < maxStrCnt-1)
             {
-                readChar[readCnt] = (char) readByte;
-                readCnt += 1;
+                readChar[readCnt++] = (char) readByte;
             }
             else
             {
@@ -80,22 +84,23 @@ void readSerialInput()
 
 void rotateServoMotor()
 {
-    if (readStr == "SM0" && servoPos < maxPos)
+    if (servoPos != targetPos)
     {
-        servoPos+=1;
+        servoPos += steps;
         myservo.write(servoPos);
-        Serial.println(servoPos);
-        delay(100);
-    }
-    else if (readStr == "SM1" && servoPos > minPos)
-    {
-        servoPos-=1;
-        myservo.write(servoPos);
-        Serial.println(servoPos);
-        delay(100);
+        isStepDone = (servoPos == targetPos);
+        delay(15);
     }
     else
     {
-        // Nothing to be processed
+        if (isStepDone)
+        {
+            Serial.println("DONE");
+            isStepDone = false;
+        }
+        else
+        {
+            // Nothing to be processed
+        }
     }
 }
