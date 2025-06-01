@@ -1,7 +1,7 @@
 #include <Servo.h>
 
 #define maxStrCnt   4
-#define maxPos      100
+#define maxPos      110
 #define minPos      30
 
 // Initialise Pin
