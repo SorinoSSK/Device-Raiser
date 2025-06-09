@@ -46,34 +46,16 @@ void readSerialInput()
     if (Serial.available() > 0)
     {
         int readByte = Serial.read();
-        if (readByte == LF_Byte)
+        if (readCnt < maxStrCnt-1)
         {
-            readCnt = 0;
-            readStr = String(readChar);
-            memset(readChar, 0, sizeof(readChar));
-            if (readStr == "SM0" || readStr == "SM1")
-            {
-                targetPos = (readStr == "SM0") ? maxPos : minPos;
-                steps = (targetPos > servoPos) ? 1 : -1;
-                Serial.println("OK");
-            }
-            else
-            {
-                readStr = "";
-                Serial.println("ERR");
-            }
+            readChar[readCnt++] = (char) readByte;
+            determineServoPos();
         }
         else
         {
-            if (readCnt < maxStrCnt-1)
-            {
-                readChar[readCnt++] = (char) readByte;
-            }
-            else
-            {
-                readCnt = 0;
-                memset(readChar, 0, sizeof(readChar));
-            }
+            readCnt = 0;
+            memset(readChar, 0, sizeof(readChar));
+            readChar[readCnt++] = (char) readByte;
         }
     }
     else
@@ -84,7 +66,7 @@ void readSerialInput()
 
 void rotateServoMotor()
 {
-    if (servoPos != targetPos)
+    if (servoPos != targetPos && isStepsWithinBoundary())
     {
         servoPos += steps;
         myservo.write(servoPos);
@@ -102,5 +84,34 @@ void rotateServoMotor()
         {
             // Nothing to be processed
         }
+    }
+}
+
+bool isStepsWithinBoundary()
+{
+    return (servoPos + steps) < maxPos && (servoPos - steps) > minPos;
+}
+
+void determineServoPos()
+{
+    if (readCnt == (maxStrCnt - 1)) // Read 3 Bytes and reset on the last read
+    {
+        readCnt = 0;
+        readStr = String(readChar);
+        memset(readChar, 0, sizeof(readChar));
+        if (readStr == "SM0" || readStr == "SM1")
+        {
+            targetPos = (readStr == "SM0") ? maxPos : minPos;
+            steps = (targetPos > servoPos) ? 1 : -1;
+            Serial.println("OK");
+        }
+        else
+        {
+            Serial.println("ERR");
+        }
+    }
+    else
+    {
+        // Nothing to be processed
     }
 }
