@@ -51,6 +51,11 @@ void readSerialInput()
             readChar[readCnt++] = (char) readByte;
             determineServoPos();
         }
+        else if (readByte == LF_Byte)
+        {
+            readCnt = 0;
+            memset(readChar, 0, sizeof(readChar));
+        }
         else
         {
             readCnt = 0;
