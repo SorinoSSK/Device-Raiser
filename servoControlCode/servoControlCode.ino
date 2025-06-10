@@ -16,9 +16,9 @@ String readStr  = "";
 char readChar[maxStrCnt];
 
 int readCnt     = 0;
-char LF_Byte     = '\n';
 int targetPos   = maxPos;
 int steps       = 1;
+char LF_Byte     = '\n';
 bool isStepDone = false;
 
 void setup() 
