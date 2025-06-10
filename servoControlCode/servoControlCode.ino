@@ -1,8 +1,8 @@
 #include <Servo.h>
 
 #define maxStrCnt   4
-#define maxPos      110
-#define minPos      30
+#define maxPos      115
+#define minPos      50
 
 // Initialise Pin
 #define servoPin    9
@@ -16,7 +16,7 @@ String readStr  = "";
 char readChar[maxStrCnt];
 
 int readCnt     = 0;
-int LF_Byte     = 10;
+char LF_Byte     = '\n';
 int targetPos   = maxPos;
 int steps       = 1;
 bool isStepDone = false;
@@ -24,7 +24,7 @@ bool isStepDone = false;
 void setup() 
 {
     // Serial
-    Serial.begin(9600);
+    Serial.begin(115200);
     // Servo
     myservo.attach(servoPin);
     myservo.write(servoPos);
@@ -46,19 +46,39 @@ void readSerialInput()
     if (Serial.available() > 0)
     {
         int readByte = Serial.read();
-        if (readCnt < maxStrCnt-1)
+        if (readByte == LF_Byte)
         {
-            readChar[readCnt++] = (char) readByte;
+            readCnt = 0;
+            readStr = String(readChar);
+            readStr.trim();
+            memset(readChar, 0, sizeof(readChar));
+            if (readStr == "SM0" || readStr == "SM1")
+            {
+                targetPos = (readStr == "SM0") ? maxPos : minPos;
+                steps = (targetPos > servoPos) ? 5 : -5;
+                Serial.println("OK");
+            }
+            else
+            {
+                Serial.println("ERR: " + readStr);
+                readStr = "";
+            }
         }
         else
         {
-            // Let Reading Pass Through And Do Not Record
+            if (readCnt < maxStrCnt-1)
+            {
+                readChar[readCnt++] = (char) readByte;
+            }
+            else
+            {
+                // Let Reading Bypass
+            }
         }
     }
     else
     {
-        // Start Processing When Reading Ends
-        determineServoPos();
+        // Nothing to be processed
     }
 }
 
@@ -68,7 +88,7 @@ void rotateServoMotor()
     {
         servoPos += steps;
         myservo.write(servoPos);
-        isStepDone = (servoPos == targetPos);
+        isStepDone = (servoPos == targetPos || !isStepsWithinBoundary());
         delay(15);
     }
     else
@@ -87,29 +107,5 @@ void rotateServoMotor()
 
 bool isStepsWithinBoundary()
 {
-    return (servoPos + steps) < maxPos && (servoPos - steps) > minPos;
-}
-
-void determineServoPos()
-{
-    if (readCnt > 0) // Read if there is data
-    {
-        readCnt = 0;
-        readStr = String(readChar);
-        memset(readChar, 0, sizeof(readChar));
-        if (readStr == "SM0" || readStr == "SM1")
-        {
-            targetPos = (readStr == "SM0") ? maxPos : minPos;
-            steps = (targetPos > servoPos) ? 1 : -1;
-            Serial.println("OK");
-        }
-        else
-        {
-            Serial.println("ERR");
-        }
-    }
-    else
-    {
-        // Nothing to be processed
-    }
+    return (servoPos + steps) < maxPos && (servoPos + steps) > minPos;
 }
