@@ -49,23 +49,16 @@ void readSerialInput()
         if (readCnt < maxStrCnt-1)
         {
             readChar[readCnt++] = (char) readByte;
-            determineServoPos();
-        }
-        else if (readByte == LF_Byte)
-        {
-            readCnt = 0;
-            memset(readChar, 0, sizeof(readChar));
         }
         else
         {
-            readCnt = 0;
-            memset(readChar, 0, sizeof(readChar));
-            readChar[readCnt++] = (char) readByte;
+            // Let Reading Pass Through And Do Not Record
         }
     }
     else
     {
-        // Nothing to be processed
+        // Start Processing When Reading Ends
+        determineServoPos();
     }
 }
 
@@ -99,7 +92,7 @@ bool isStepsWithinBoundary()
 
 void determineServoPos()
 {
-    if (readCnt == (maxStrCnt - 1)) // Read 3 Bytes and reset on the last read
+    if (readCnt > 0) // Read if there is data
     {
         readCnt = 0;
         readStr = String(readChar);
